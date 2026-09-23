@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiz Video Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">?</span> Quiz Video Studio</div>
+  <div class="top-actions">
+    <span id="ytChip" class="chip">YouTube: …</span>
+    <button class="btn" id="btnAutopilot">⚡ Piloto automático</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <button class="btn primary block" id="btnNew">+ Nuevo quiz</button>
+    <ul id="projectList" class="project-list"></ul>
+  </aside>
+
+  <main id="main">
+    <section id="empty" class="empty">
+      <h1>Crea vídeos de quiz para YouTube en minutos</h1>
+      <p>Escribe un tema, deja que la IA prepare las preguntas, elige una voz realista y genera el vídeo con temporizador, efectos de sonido y revelación de la respuesta.</p>
+      <ol>
+        <li>Pulsa <b>+ Nuevo quiz</b> (o <b>⚡ Piloto automático</b> para hacer varios de golpe).</li>
+        <li>Genera o escribe las preguntas.</li>
+        <li>Elige estilo, formato (horizontal o Shorts) y voz.</li>
+        <li>Genera el vídeo y súbelo a YouTube.</li>
+      </ol>
+    </section>
+
+    <section id="editor" class="hidden">
+      <div class="editor-head">
+        <input id="pTitle" class="title-input" placeholder="Título del quiz">
+        <div class="head-actions">
+          <span id="saveState" class="muted small"></span>
+          <button class="btn ghost" id="btnDuplicate">Duplicar</button>
+          <button class="btn danger ghost" id="btnDelete">Eliminar</button>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <button data-tab="questions" class="active">1. Preguntas</button>
+        <button data-tab="style">2. Estilo y voz</button>
+        <button data-tab="preview">3. Vista previa</button>
+        <button data-tab="publish">4. Generar y publicar</button>
+      </nav>
+
+      <!-- PREGUNTAS -->
+      <div class="tab" id="tab-questions">
+        <div class="grid2">
+          <div class="card">
+            <h3>✨ Generar con IA</h3>
+            <p id="aiHint" class="muted small hidden">Configura <code>ANTHROPIC_API_KEY</code> para activar la generación automática.</p>
+            <label>Tema<input id="aiTopic" placeholder="p. ej. Capitales del mundo, Harry Potter, fútbol…"></label>
+            <div class="row">
+              <label>Preguntas<input id="aiCount" type="number" min="1" max="50" value="10"></label>
+              <label>Dificultad
+                <select id="aiDifficulty">
+                  <option value="progresiva">Progresiva</option>
+                  <option value="fácil">Fácil</option>
+                  <option value="media">Media</option>
+                  <option value="difícil">Difícil</option>
+                </select>
+              </label>
+              <label>Idioma
+                <select id="pLanguage">
+                  <option value="es">Español</option>
+                  <option value="en">English</option>
+                  <option value="pt">Português</option>
+                </select>
+              </label>
+            </div>
+            <label>Indicaciones extra (opcional)<input id="aiExtra" placeholder="p. ej. solo países de Europa, para niños…"></label>
+            <div class="row between">
+              <label class="check"><input type="checkbox" id="aiAppend"> Añadir a las existentes</label>
+              <button class="btn primary" id="btnGenerate">✨ Generar preguntas</button>
+            </div>
+            <div class="job hidden" id="genJob"><div class="bar"><i></i></div><span></span></div>
+          </div>
+
+          <div class="card">
+            <h3>📄 Importar / exportar</h3>
+            <p class="muted small">CSV: <code>pregunta, opción A, opción B, opción C, opción D, correcta (A-D), explicación</code><br>o JSON con <code>{"questions":[{"question","options":[…],"correct":0,"explanation"}]}</code></p>
+            <div class="row">
+              <input type="file" id="importFile" accept=".csv,.json,.txt">
+            </div>
+            <div class="row between">
+              <label class="check"><input type="checkbox" id="importReplace"> Reemplazar las actuales</label>
+              <button class="btn" id="btnImport">Importar</button>
+            </div>
+            <a class="btn ghost" id="btnExport" href="#">⬇ Exportar JSON</a>
+            <label>Tema (para intro y metadatos)<input id="pTopic" placeholder="Tema del quiz"></label>
+          </div>
+        </div>
+
+        <div class="list-head">
+          <h2>Preguntas <span id="qCount" class="muted"></span></h2>
+          <button class="btn" id="btnAddQ">+ Añadir pregunta</button>
+        </div>
+        <div id="questions"></div>
+        <button class="btn block ghost" id="btnAddQ2">+ Añadir pregunta</button>
+      </div>
+
+      <!-- ESTILO -->
+      <div class="tab hidden" id="tab-style">
+        <div class="grid2">
+          <div class="card">
+            <h3>🎨 Aspecto</h3>
+            <label>Formato
+              <div class="seg" id="fmtSeg">
+                <button data-v="16:9">▭ Horizontal 16:9</button>
+                <button data-v="9:16">▯ Shorts 9:16</button>
+              </div>
+            </label>
+            <label>Tema visual<select id="sTheme"></select></label>
+            <div id="themeThumbs" class="theme-thumbs"></div>
+            <div class="row">
+              <label>Segundos para pensar <b id="thinkVal"></b><input type="range" id="sThink" min="2" max="20"></label>
+              <label>Pausa tras respuesta <b id="revealVal"></b><input type="range" id="sReveal" min="0" max="5" step="0.1"></label>
+            </div>
+            <label class="check"><input type="checkbox" id="sReadOptions"> Leer las opciones en voz alta</label>
+            <label class="check"><input type="checkbox" id="sExplain"> Mostrar y leer la explicación</label>
+            <label>FPS
+              <select id="sFps"><option value="24">24</option><option value="30">30</option><option value="60">60 (lento)</option></select>
+            </label>
+          </div>
+
+          <div class="card">
+            <h3>🎙️ Voz</h3>
+            <label>Motor de voz
+              <select id="sProvider">
+                <option value="edge">Microsoft Neural (gratis, muy realista)</option>
+                <option value="elevenlabs">ElevenLabs (premium)</option>
+                <option value="silent">Sin voz (solo pruebas)</option>
+              </select>
+            </label>
+            <div class="row">
+              <label class="grow">Voz<select id="sVoice"></select></label>
+              <button class="btn ghost small-btn" id="btnAllVoices" title="Cargar todas las voces">Todas</button>
+            </div>
+            <div class="row">
+              <label>Velocidad <b id="rateVal"></b><input type="range" id="sRate" min="-50" max="50"></label>
+              <label>Tono <b id="pitchVal"></b><input type="range" id="sPitch" min="-20" max="20"></label>
+            </div>
+            <label>Texto de prueba<input id="ttsText" value="¡Hola! ¿Estás listo para poner a prueba tus conocimientos?"></label>
+            <div class="row">
+              <button class="btn" id="btnTestVoice">▶ Probar voz</button>
+              <audio id="ttsAudio" controls class="grow"></audio>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>🎬 Intro y cierre</h3>
+            <label class="check"><input type="checkbox" id="sIntro"> Intro</label>
+            <label>Texto de la intro (vacío = automático)<textarea id="sIntroText" rows="2"></textarea></label>
+            <label class="check"><input type="checkbox" id="sOutro"> Cierre</label>
+            <label>Texto del cierre (vacío = automático)<textarea id="sOutroText" rows="2"></textarea></label>
+          </div>
+
+          <div class="card">
+            <h3>🎵 Música y efectos</h3>
+            <p class="muted small">Sube una pista sin copyright (se repite en bucle y baja automáticamente cuando habla la voz).</p>
+            <div class="row">
+              <input type="file" id="musicFile" accept="audio/*">
+              <button class="btn" id="btnMusic">Subir</button>
+            </div>
+            <div class="row between"><span id="musicName" class="muted small">Sin música</span>
+              <button class="btn ghost small-btn" id="btnNoMusic">Quitar</button></div>
+            <label>Volumen música <b id="musicVolVal"></b><input type="range" id="sMusicVol" min="0" max="0.5" step="0.01"></label>
+            <label>Volumen efectos <b id="sfxVolVal"></b><input type="range" id="sSfxVol" min="0" max="1" step="0.05"></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="tab hidden" id="tab-preview">
+        <div class="card">
+          <div class="row">
+            <label>Escena
+              <select id="pvPhase">
+                <option value="intro">Intro</option>
+                <option value="think" selected>Pregunta (cuenta atrás)</option>
+                <option value="reveal">Respuesta</option>
+                <option value="outro">Cierre</option>
+              </select>
+            </label>
+            <label>Pregunta<select id="pvQ"></select></label>
+            <button class="btn" id="btnPreview">↻ Actualizar</button>
+          </div>
+          <div class="preview-wrap"><img id="pvImg" alt="Vista previa"></div>
+        </div>
+      </div>
+
+      <!-- PUBLICAR -->
+      <div class="tab hidden" id="tab-publish">
+        <div class="grid2">
+          <div class="card">
+            <h3>🎬 Vídeo</h3>
+            <p class="muted small" id="renderInfo"></p>
+            <button class="btn primary big" id="btnRender">🎬 Generar vídeo</button>
+            <div class="job hidden" id="renderJob"><div class="bar"><i></i></div><span></span></div>
+            <div id="videoBox" class="hidden">
+              <video id="video" controls></video>
+              <div class="row">
+                <a class="btn" id="dlVideo">⬇ Descargar MP4</a>
+                <a class="btn ghost" id="dlThumb">⬇ Miniatura</a>
+              </div>
+              <img id="thumb" class="thumb">
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>▶ YouTube</h3>
+            <div class="row between">
+              <span id="ytStatus" class="muted small"></span>
+              <span>
+                <a class="btn ghost small-btn hidden" id="btnYtConnect" href="/api/youtube/auth">Conectar</a>
+                <button class="btn ghost small-btn hidden" id="btnYtDisconnect">Desconectar</button>
+              </span>
+            </div>
+            <label>Título<input id="ytTitle" maxlength="100"></label>
+            <label>Descripción<textarea id="ytDesc" rows="6"></textarea></label>
+            <label>Etiquetas (separadas por comas)<input id="ytTags"></label>
+            <div class="row">
+              <label>Visibilidad
+                <select id="ytPrivacy">
+                  <option value="private">Privado</option>
+                  <option value="unlisted">Oculto</option>
+                  <option value="public">Público</option>
+                </select>
+              </label>
+              <button class="btn" id="btnMeta">✨ Generar metadatos</button>
+            </div>
+            <div class="job hidden" id="metaJob"><div class="bar"><i></i></div><span></span></div>
+            <button class="btn primary" id="btnUpload">⬆ Subir a YouTube</button>
+            <div class="job hidden" id="uploadJob"><div class="bar"><i></i></div><span></span></div>
+            <p id="ytLink" class="small"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal piloto automático -->
+<div class="modal hidden" id="apModal">
+  <div class="modal-box">
+    <div class="row between"><h2>⚡ Piloto automático</h2><button class="btn ghost" id="apClose">✕</button></div>
+    <p class="muted small">Un tema por línea. Para cada tema: la IA escribe las preguntas y los metadatos, se genera el vídeo y (opcional) se sube a YouTube.</p>
+    <textarea id="apTopics" rows="6" placeholder="Capitales de Europa&#10;Películas de Pixar&#10;Banderas de América"></textarea>
+    <div class="row">
+      <label>Preguntas<input id="apCount" type="number" value="10" min="1" max="50"></label>
+      <label>Dificultad<select id="apDifficulty"><option value="progresiva">Progresiva</option><option value="fácil">Fácil</option><option value="media">Media</option><option value="difícil">Difícil</option></select></label>
+      <label>Idioma<select id="apLang"><option value="es">Español</option><option value="en">English</option><option value="pt">Português</option></select></label>
+    </div>
+    <div class="row">
+      <label>Formato<select id="apFormat"><option value="16:9">Horizontal 16:9</option><option value="9:16">Shorts 9:16</option></select></label>
+      <label>Tema visual<select id="apTheme"></select></label>
+      <label>Voz<select id="apVoice"></select></label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="apUpload"> Subir a YouTube al terminar</label>
+      <select id="apPrivacy"><option value="private">Privado</option><option value="unlisted">Oculto</option><option value="public">Público</option></select>
+    </div>
+    <button class="btn primary block" id="apStart">Empezar</button>
+    <div id="apJobs"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
